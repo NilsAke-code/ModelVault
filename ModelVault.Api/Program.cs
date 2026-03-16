@@ -1,3 +1,4 @@
+using Microsoft.Identity.Web;
 using ModelVault.Api.Database;
 using ModelVault.Api.Endpoints;
 using ModelVault.Api.Repositories;
@@ -9,6 +10,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+// Authentication — validates JWT tokens from Microsoft Entra ID
+var clientId = builder.Configuration["AzureAd:ClientId"];
+var isAuthConfigured = !string.IsNullOrEmpty(clientId) && !clientId.Contains("YOUR_");
+
+if (isAuthConfigured)
+{
+    builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+}
+else
+{
+    // Placeholder auth so [Authorize] doesn't crash — no real validation
+    builder.Services.AddAuthentication();
+}
+builder.Services.AddAuthorization();
+
 builder.Services.AddSingleton<DatabaseInitializer>();
 builder.Services.AddSingleton<DatabaseSeeder>();
 builder.Services.AddSingleton<ModelRepository>();
@@ -19,13 +35,18 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapDefaultEndpoints();
 
 // Initialize database and seed

@@ -28,9 +28,12 @@ A web app called **3DModelVault** for uploading, organizing, sharing, and downlo
 - Same layout as All Models but scoped to the logged-in user
 
 ### Authentication
-- Microsoft account login via MSAL
-- Browsing and downloading is public — no login required
-- Login required only for: uploading, editing, and deleting models
+- Microsoft account login via MSAL (Microsoft Entra ID)
+- Browsing and viewing models is public — no login required
+- Login required for: downloading, uploading, editing, and deleting models
+- Backend validates JWT tokens from Microsoft (Microsoft.Identity.Web) — frontend only handles UI and sends tokens
+- Frontend uses @azure/msal-react for login popup/redirect
+- User identity (AuthorId, AuthorName) is extracted from JWT token claims on the backend — never sent from the frontend
 
 ### Likes
 - Simple counter — no per-user tracking

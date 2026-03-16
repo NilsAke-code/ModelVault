@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ModelVault.Api.Models;
 using ModelVault.Api.Repositories;
 using ModelVault.Api.Services;
@@ -10,6 +11,7 @@ public static class ModelEndpoints
     {
         var group = app.MapGroup("/api/models");
 
+        // PUBLIC — anyone can browse models
         group.MapGet("/", async (
             string? search, string? category, string? tag, string? sort,
             ModelRepository repo) =>
@@ -18,17 +20,27 @@ public static class ModelEndpoints
             return Results.Ok(models);
         });
 
+        // PUBLIC — anyone can view a single model
         group.MapGet("/{id:int}", async (int id, ModelRepository repo) =>
         {
             var model = await repo.GetByIdAsync(id);
             return model is null ? Results.NotFound() : Results.Ok(model);
         });
 
+        // AUTH REQUIRED — upload a new model
         group.MapPost("/", async (
             HttpRequest request,
             ModelRepository repo,
             FileStorageService fileStorage) =>
         {
+            var user = request.HttpContext.User;
+            var authorId = user.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? user.FindFirstValue("oid") // Microsoft Entra object ID
+                ?? throw new UnauthorizedAccessException("No user identity found.");
+            var authorName = user.FindFirstValue("name")
+                ?? user.FindFirstValue(ClaimTypes.Name)
+                ?? "Unknown";
+
             var form = await request.ReadFormAsync();
             var modelFile = form.Files.GetFile("modelFile");
             var thumbnail = form.Files.GetFile("thumbnail");
@@ -52,29 +64,42 @@ public static class ModelEndpoints
                 Category = form["category"].ToString(),
                 FilePath = filePath,
                 ThumbnailPath = thumbnailPath,
-                AuthorId = "anonymous",
-                AuthorName = form["authorName"].ToString() is { Length: > 0 } name ? name : "Anonymous",
+                AuthorId = authorId,
+                AuthorName = authorName,
                 Tags = tags
             };
 
             var id = await repo.CreateAsync(model);
             return Results.Created($"/api/models/{id}", new { id });
-        });
+        }).RequireAuthorization();
 
-        group.MapPut("/{id:int}", async (int id, UpdateModelRequest request, ModelRepository repo) =>
-        {
-            if (!await repo.ExistsAsync(id))
-                return Results.NotFound();
-
-            await repo.UpdateAsync(id, request);
-            return Results.NoContent();
-        });
-
-        group.MapDelete("/{id:int}", async (int id, ModelRepository repo, FileStorageService fileStorage) =>
+        // AUTH REQUIRED — update model (owner only)
+        group.MapPut("/{id:int}", async (int id, UpdateModelRequest request, HttpContext httpContext, ModelRepository repo) =>
         {
             var model = await repo.GetByIdAsync(id);
             if (model is null)
                 return Results.NotFound();
+
+            var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? httpContext.User.FindFirstValue("oid");
+            if (model.AuthorId != userId)
+                return Results.Forbid();
+
+            await repo.UpdateAsync(id, request);
+            return Results.NoContent();
+        }).RequireAuthorization();
+
+        // AUTH REQUIRED — delete model (owner only)
+        group.MapDelete("/{id:int}", async (int id, HttpContext httpContext, ModelRepository repo, FileStorageService fileStorage) =>
+        {
+            var model = await repo.GetByIdAsync(id);
+            if (model is null)
+                return Results.NotFound();
+
+            var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? httpContext.User.FindFirstValue("oid");
+            if (model.AuthorId != userId)
+                return Results.Forbid();
 
             if (!string.IsNullOrEmpty(model.FilePath))
                 fileStorage.DeleteFile(model.FilePath);
@@ -83,8 +108,9 @@ public static class ModelEndpoints
 
             await repo.DeleteAsync(id);
             return Results.NoContent();
-        });
+        }).RequireAuthorization();
 
+        // AUTH REQUIRED — download a model file
         group.MapGet("/{id:int}/download", async (int id, ModelRepository repo, FileStorageService fileStorage) =>
         {
             var model = await repo.GetByIdAsync(id);
@@ -105,8 +131,9 @@ public static class ModelEndpoints
             };
 
             return Results.File(fullPath, contentType, Path.GetFileName(model.FilePath));
-        });
+        }).RequireAuthorization();
 
+        // PUBLIC — anyone can like a model
         group.MapPost("/{id:int}/like", async (int id, ModelRepository repo) =>
         {
             if (!await repo.ExistsAsync(id))
