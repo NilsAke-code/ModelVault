@@ -247,5 +247,7 @@ Create a screenshot utility script at `tools/screenshot.ts` that:
 - Store uploaded files on disk in a configurable path — never store binary files in the database
 - Seed the database with mock models on first run (check if data exists first to avoid duplicates)
 - All colors must be defined in Tailwind config using the CSS variables above — never hardcode colors in components
+
+- Hej hej
 - Categories are a fixed list, not user-created
 - SQL Server runs as an Aspire Docker container resource
