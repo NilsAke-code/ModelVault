@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ModelVault.Api/ModelVault.Api.csproj" />
+  <Project Path="ModelVault.AppHost/ModelVault.AppHost.csproj" />
+  <Project Path="ModelVault.ServiceDefaults/ModelVault.ServiceDefaults.csproj" />
+  <Project Path="modelvault-frontend/modelvault-frontend.esproj" />
+</Solution>
