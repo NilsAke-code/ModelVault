@@ -5,6 +5,7 @@ import Models from './pages/Models';
 import ModelDetail from './pages/ModelDetail';
 import Library from './pages/Library';
 import Upload from './pages/Upload';
+import Admin from './pages/Admin';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/model/:id" element={<ModelDetail />} />
           <Route path="/library" element={<Library />} />
           <Route path="/library/upload" element={<Upload />} />
+          <Route path="/admin" element={<Admin />} />
         </Route>
       </Routes>
     </BrowserRouter>

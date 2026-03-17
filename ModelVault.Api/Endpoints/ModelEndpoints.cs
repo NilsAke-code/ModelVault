@@ -111,13 +111,23 @@ public static class ModelEndpoints
         }).RequireAuthorization();
 
         // AUTH REQUIRED — download a model file
-        group.MapGet("/{id:int}/download", async (int id, ModelRepository repo, FileStorageService fileStorage) =>
+        group.MapGet("/{id:int}/download", async (int id, HttpContext httpContext, ModelRepository repo, UserRepository userRepo, FileStorageService fileStorage) =>
         {
             var model = await repo.GetByIdAsync(id);
             if (model is null)
                 return Results.NotFound();
 
-            await repo.IncrementDownloadsAsync(id);
+            // Log download history
+            int? userId = null;
+            var microsoftId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? httpContext.User.FindFirstValue("oid");
+            if (microsoftId is not null)
+            {
+                var user = await userRepo.GetByMicrosoftIdAsync(microsoftId);
+                userId = user?.Id;
+            }
+
+            await repo.IncrementDownloadsAsync(id, userId);
 
             var fullPath = fileStorage.GetFullPath(model.FilePath);
             if (!File.Exists(fullPath))

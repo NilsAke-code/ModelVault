@@ -1,6 +1,6 @@
 import { apiRequest } from "../auth/authConfig";
 import { msalInstance } from "../auth/AuthProvider";
-import type { Model3D, Tag } from "../types";
+import type { Model3D, Tag, UserInfo, AdminStats } from "../types";
 
 const BASE = "/api";
 
@@ -119,4 +119,48 @@ export async function downloadModel(id: number): Promise<Blob> {
   const res = await authFetch(`${BASE}/models/${id}/download`);
   if (!res.ok) throw new Error("Failed to download model");
   return res.blob();
+}
+
+// ===== USER / ROLE endpoints =====
+
+export async function fetchCurrentUser(): Promise<UserInfo> {
+  const res = await authFetch(`${BASE}/users/me`);
+  if (!res.ok) throw new Error("Failed to fetch user info");
+  return res.json();
+}
+
+// ===== ADMIN endpoints =====
+
+export async function fetchAdminStats(): Promise<AdminStats> {
+  const res = await authFetch(`${BASE}/admin/stats`);
+  if (!res.ok) throw new Error("Failed to fetch admin stats");
+  return res.json();
+}
+
+export async function fetchAdminUsers(): Promise<UserInfo[]> {
+  const res = await authFetch(`${BASE}/admin/users`);
+  if (!res.ok) throw new Error("Failed to fetch users");
+  return res.json();
+}
+
+export async function updateUserRole(userId: number, role: number): Promise<void> {
+  const res = await authFetch(`${BASE}/admin/users/${userId}/role`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role }),
+  });
+  if (!res.ok) throw new Error("Failed to update user role");
+}
+
+export async function fetchAdminModels(search?: string): Promise<Model3D[]> {
+  const query = new URLSearchParams();
+  if (search) query.set("search", search);
+  const res = await authFetch(`${BASE}/admin/models?${query}`);
+  if (!res.ok) throw new Error("Failed to fetch admin models");
+  return res.json();
+}
+
+export async function adminDeleteModel(id: number): Promise<void> {
+  const res = await authFetch(`${BASE}/admin/models/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete model");
 }

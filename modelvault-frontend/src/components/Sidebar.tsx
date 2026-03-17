@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Box, Library, Menu, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Home, Box, Library, Menu, X, PanelLeftClose, PanelLeftOpen, Shield } from 'lucide-react';
 import { useState } from 'react';
+import { useUser } from '../contexts/UserContext';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -9,6 +10,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAdmin } = useUser();
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${
@@ -48,6 +50,18 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <Library size={18} />
           {!collapsed && 'My Library'}
         </NavLink>
+        {isAdmin && (
+          <>
+            <div className="border-t border-border my-3 mx-2" />
+            {!collapsed && (
+              <span className="px-4 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Admin</span>
+            )}
+            <NavLink to="/admin" className={linkClass} onClick={() => setMobileOpen(false)}>
+              <Shield size={18} />
+              {!collapsed && 'Admin Panel'}
+            </NavLink>
+          </>
+        )}
       </nav>
     </>
   );

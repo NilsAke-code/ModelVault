@@ -19,3 +19,21 @@ export interface Tag {
   id: number;
   name: string;
 }
+
+export interface UserInfo {
+  id: number;
+  email: string;
+  displayName: string;
+  role: number;
+}
+
+export interface AdminStats {
+  totalModels: number;
+  totalUsers: number;
+  totalDownloads: number;
+  totalLikes: number;
+  modelsLast7Days: number;
+  modelsLast30Days: number;
+  usersLast7Days: number;
+  usersLast30Days: number;
+}

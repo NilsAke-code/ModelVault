@@ -118,10 +118,18 @@ public class ModelRepository(IConfiguration configuration)
         await conn.ExecuteAsync("DELETE FROM Models WHERE Id = @Id", new { Id = id });
     }
 
-    public async Task IncrementDownloadsAsync(int id)
+    public async Task IncrementDownloadsAsync(int id, int? userId = null)
     {
         await using var conn = CreateConnection();
+        await conn.OpenAsync();
         await conn.ExecuteAsync("UPDATE Models SET Downloads = Downloads + 1 WHERE Id = @Id", new { Id = id });
+
+        if (userId.HasValue)
+        {
+            await conn.ExecuteAsync(
+                "INSERT INTO DownloadHistory (ModelId, UserId, DownloadedAt) VALUES (@ModelId, @UserId, GETUTCDATE())",
+                new { ModelId = id, UserId = userId.Value });
+        }
     }
 
     public async Task IncrementLikesAsync(int id)

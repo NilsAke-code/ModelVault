@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
 using ModelVault.Api.Database;
 using ModelVault.Api.Endpoints;
 using ModelVault.Api.Repositories;
@@ -12,11 +14,23 @@ builder.AddServiceDefaults();
 
 // Authentication — validates JWT tokens from Microsoft Entra ID
 var clientId = builder.Configuration["AzureAd:ClientId"];
+var tenantId = builder.Configuration["AzureAd:TenantId"];
 var isAuthConfigured = !string.IsNullOrEmpty(clientId) && !clientId.Contains("YOUR_");
 
 if (isAuthConfigured)
 {
-    builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.Authority = "https://login.microsoftonline.com/common/v2.0";
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidAudiences = new[] { clientId, $"api://{clientId}" },
+                ValidateIssuer = false, // Accept any tenant + personal Microsoft accounts
+                ValidateAudience = true,
+                ValidateLifetime = true,
+            };
+        });
 }
 else
 {
@@ -30,6 +44,7 @@ builder.Services.AddSingleton<DatabaseSeeder>();
 builder.Services.AddSingleton<ModelRepository>();
 builder.Services.AddSingleton<TagRepository>();
 builder.Services.AddSingleton<FileStorageService>();
+builder.Services.AddSingleton<UserRepository>();
 
 builder.Services.AddCors(options =>
 {
@@ -68,5 +83,6 @@ app.UseStaticFiles(new StaticFileOptions
 app.MapModelEndpoints();
 app.MapTagEndpoints();
 app.MapCategoryEndpoints();
+app.MapUserEndpoints();
 
 app.Run();

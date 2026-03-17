@@ -54,5 +54,47 @@ public class DatabaseInitializer(IConfiguration configuration)
                 );
             END
             """);
+
+        await connection.ExecuteAsync("""
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Users')
+            BEGIN
+                CREATE TABLE Users (
+                    Id INT IDENTITY(1,1) PRIMARY KEY,
+                    Email NVARCHAR(320) NOT NULL UNIQUE,
+                    DisplayName NVARCHAR(200) NOT NULL DEFAULT '',
+                    MicrosoftId NVARCHAR(200) NOT NULL DEFAULT '',
+                    Role INT NOT NULL DEFAULT 1,
+                    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                    LastLoginAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+                );
+            END
+            """);
+
+        await connection.ExecuteAsync("""
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DownloadHistory')
+            BEGIN
+                CREATE TABLE DownloadHistory (
+                    Id INT IDENTITY(1,1) PRIMARY KEY,
+                    ModelId INT NOT NULL,
+                    UserId INT NOT NULL,
+                    DownloadedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                    FOREIGN KEY (ModelId) REFERENCES Models(Id) ON DELETE CASCADE,
+                    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
+                );
+                CREATE INDEX IX_DownloadHistory_ModelId ON DownloadHistory(ModelId);
+                CREATE INDEX IX_DownloadHistory_UserId ON DownloadHistory(UserId);
+            END
+            """);
+
+        // Seed admin user from config
+        var adminEmail = configuration["AdminSettings:Email"];
+        if (!string.IsNullOrEmpty(adminEmail) && !adminEmail.Contains("YOUR_"))
+        {
+            await connection.ExecuteAsync("""
+                IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = @Email)
+                    INSERT INTO Users (Email, DisplayName, Role, CreatedAt, LastLoginAt)
+                    VALUES (@Email, 'Admin', 2, GETUTCDATE(), GETUTCDATE());
+                """, new { Email = adminEmail });
+        }
     }
 }

@@ -4,6 +4,7 @@ import './index.css'
 import App from './App'
 import AuthProvider from './auth/AuthProvider'
 import { msalReady } from './auth/AuthProvider'
+import { UserProvider } from './contexts/UserContext'
 
 // Wait for MSAL to initialize and handle any redirect (popup or redirect flow)
 // before mounting React. In a popup window, handleRedirectPromise() will
@@ -12,7 +13,9 @@ msalReady.then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <AuthProvider>
-        <App />
+        <UserProvider>
+          <App />
+        </UserProvider>
       </AuthProvider>
     </StrictMode>,
   )
