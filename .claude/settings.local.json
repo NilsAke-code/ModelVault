@@ -4,7 +4,14 @@
       "Bash(dotnet --version)",
       "Bash(dotnet workload:*)",
       "Bash(npm --version)",
-      "Bash(dotnet new:*)"
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add:*)",
+      "Bash(npm install:*)",
+      "Bash(dotnet build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Bash(npx tsx:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

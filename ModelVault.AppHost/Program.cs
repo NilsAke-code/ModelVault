@@ -5,6 +5,6 @@ var api = builder.AddProject<Projects.ModelVault_Api>("api");
 builder.AddNpmApp("frontend", "../modelvault-frontend", "dev")
     .WithReference(api)
     .WaitFor(api)
-    .WithHttpEndpoint(env: "PORT");
+    .WithHttpEndpoint(port: 5173, env: "PORT");
 
 builder.Build().Run();

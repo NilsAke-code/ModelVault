@@ -6,7 +6,7 @@ async function run() {
 
   // Capture all console messages
   page.on("console", (msg) => console.log(`[${msg.type()}] ${msg.text()}`));
-  page.on("pageerror", (err) => console.log(`[PAGE ERROR] ${err.message}`));
+  page.on("pageerror", (err) => console.log(`[PAGE ERROR] ${String(err)}`));
 
   await page.goto("http://localhost:5173", { waitUntil: "domcontentloaded", timeout: 15000 });
   await new Promise((r) => setTimeout(r, 5000));

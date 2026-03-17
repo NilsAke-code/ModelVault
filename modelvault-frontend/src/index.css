@@ -22,3 +22,11 @@ body {
   font-family: var(--font-sans);
   margin: 0;
 }
+
+button,
+a,
+[role="button"],
+input[type="submit"],
+input[type="button"] {
+  cursor: pointer;
+}

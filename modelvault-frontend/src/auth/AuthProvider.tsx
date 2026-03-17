@@ -7,24 +7,29 @@ import {
 import { msalConfig } from "./authConfig";
 import { type ReactNode, useEffect, useState } from "react";
 
-// Skapa MSAL-instansen en gång
-const msalInstance = new PublicClientApplication(msalConfig);
+// Single MSAL instance shared across the app
+export const msalInstance = new PublicClientApplication(msalConfig);
+
+// Initialize and handle redirect at module level.
+// In a popup window, handleRedirectPromise() sends the auth code
+// back to the parent window and closes the popup.
+export const msalReady = msalInstance
+  .initialize()
+  .then(() => msalInstance.handleRedirectPromise())
+  .catch(() => null);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState(false);
 
   useEffect(() => {
-    msalInstance
-      .initialize()
+    msalReady
       .then(() => {
-        // Set the first account as active if one exists
         const accounts = msalInstance.getAllAccounts();
         if (accounts.length > 0) {
           msalInstance.setActiveAccount(accounts[0]);
         }
 
-        // Listen for login events to set active account
         msalInstance.addEventCallback((event) => {
           if (
             event.eventType === EventType.LOGIN_SUCCESS &&
@@ -38,17 +43,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         setIsReady(true);
       })
       .catch((err) => {
-        console.warn("MSAL initialization failed (Azure App not configured yet?):", err);
+        console.warn("MSAL initialization failed:", err);
         setInitError(true);
       });
   }, []);
 
-  // If MSAL failed to init (no valid clientId yet), render app without auth
   if (initError) {
     return <>{children}</>;
   }
 
-  // Wait for MSAL to be ready before rendering
   if (!isReady) {
     return null;
   }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { fetchModels, fetchCategories, fetchTags, getThumbnailUrl } from "../services/api";
+import { fetchModels, fetchTags, getThumbnailUrl } from "../services/api";
 import type { Model3D, Tag } from "../types";
 import { SlidersHorizontal, ChevronRight, Download, Heart } from "lucide-react";
 

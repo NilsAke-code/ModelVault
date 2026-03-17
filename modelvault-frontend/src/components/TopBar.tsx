@@ -19,7 +19,7 @@ export default function TopBar() {
 
   async function handleLogin() {
     try {
-      await instance.loginPopup(loginRequest);
+      await instance.loginRedirect(loginRequest);
     } catch (err) {
       console.error("Login failed:", err);
     }
@@ -27,7 +27,7 @@ export default function TopBar() {
 
   async function handleLogout() {
     try {
-      await instance.logoutPopup({ postLogoutRedirectUri: "/" });
+      await instance.logoutRedirect({ postLogoutRedirectUri: "/" });
     } catch (err) {
       console.error("Logout failed:", err);
     }

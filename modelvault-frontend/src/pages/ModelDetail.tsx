@@ -31,7 +31,7 @@ export default function ModelDetail() {
 
   async function handleLogin() {
     try {
-      await instance.loginPopup(loginRequest);
+      await instance.loginRedirect(loginRequest);
     } catch (err) {
       console.error("Login failed:", err);
     }

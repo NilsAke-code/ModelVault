@@ -1,11 +1,8 @@
-import { PublicClientApplication } from "@azure/msal-browser";
-import { msalConfig, apiRequest } from "../auth/authConfig";
+import { apiRequest } from "../auth/authConfig";
+import { msalInstance } from "../auth/AuthProvider";
 import type { Model3D, Tag } from "../types";
 
 const BASE = "/api";
-
-// Hämta MSAL-instansen (samma som AuthProvider skapar)
-const msalInstance = new PublicClientApplication(msalConfig);
 
 /**
  * Hämtar en access token från MSAL.
