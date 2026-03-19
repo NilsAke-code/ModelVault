@@ -46,23 +46,32 @@ builder.Services.AddSingleton<TagRepository>();
 builder.Services.AddSingleton<FileStorageService>();
 builder.Services.AddSingleton<UserRepository>();
 
-builder.Services.AddCors(options =>
+// CORS only needed locally — in production frontend and backend share the same origin
+if (builder.Environment.IsDevelopment())
 {
-    options.AddDefaultPolicy(policy =>
+    builder.Services.AddCors(options =>
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+        options.AddDefaultPolicy(policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
     });
-});
+}
 
 var app = builder.Build();
 
-app.UseCors();
+if (builder.Environment.IsDevelopment())
+    app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapDefaultEndpoints();
+
+// Serve React SPA from wwwroot (populated at build time by the CI workflow)
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 // Initialize database and seed
 var dbInit = app.Services.GetRequiredService<DatabaseInitializer>();
@@ -84,5 +93,8 @@ app.MapModelEndpoints();
 app.MapTagEndpoints();
 app.MapCategoryEndpoints();
 app.MapUserEndpoints();
+
+// Fallback to index.html for SPA client-side routing
+app.MapFallbackToFile("index.html");
 
 app.Run();
